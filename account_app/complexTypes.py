@@ -4,14 +4,17 @@ class Client(ComplexModel):
     name=Unicode
     familyName=Unicode
     cin=Unicode
+    email=Unicode
 class Account(ComplexModel):
-    id=Integer
+    rib=Unicode
     client=Client
     balance=Double
+    creationDate=Date
 class Transaction(ComplexModel):
     id=Integer
     account=Account
     amount=Double
     transactionType=Unicode
     date=Date
+    transferToAccount=Unicode
     
