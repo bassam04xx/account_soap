@@ -38,4 +38,10 @@ class Transaction(models.Model):
 
     class Meta:
         db_table='transactions'
+
+    def clean(self):
+        if self.transactionType == TransactionType.TRANSFER and self.transfer_to_account is None :
+            raise ValueError('You have to specify the transfer to RIB.')
+        if self.transactionType == TransactionType.WITHDRAW and self.amount> self.account.balance:
+            raise ValueError(f"You can't withdraw more than {self.account.balance}")
     

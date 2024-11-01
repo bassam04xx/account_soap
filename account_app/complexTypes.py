@@ -1,20 +1,22 @@
-from spyne import ComplexModel, Unicode, Integer, Double,Date
-
+from spyne import ComplexModel,Integer,Unicode, Double,Date
 class Client(ComplexModel):
+    id = Integer
     name=Unicode
     familyName=Unicode
-    cin=Unicode
     email=Unicode
+
 class Account(ComplexModel):
     rib=Unicode
     client=Client
     balance=Double
+    AccountType=Unicode
     creationDate=Date
+
 class Transaction(ComplexModel):
     id=Integer
+    TransactionType=Unicode
     account=Account
+    transactionDate=Date
     amount=Double
-    transactionType=Unicode
-    date=Date
-    transferToAccount=Unicode
-    
+    description=Unicode
+    transfer_to_acount=Unicode
