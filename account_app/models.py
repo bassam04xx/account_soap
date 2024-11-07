@@ -27,7 +27,7 @@ class Bank(models.Model):
         db_table = 'banks'
 
 class Account(models.Model):
-    rib=models.CharField(max_length=30,primary_key=True)
+    RIB=models.CharField(max_length=30,primary_key=True)
     balance=models.DecimalField(max_digits=15,decimal_places=3)
     client=models.ForeignKey(Client, on_delete=models.SET_NULL,null=True)
     creation_date=models.DateField(auto_now_add=True)
