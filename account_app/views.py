@@ -53,6 +53,7 @@ class AccountService(ServiceBase):
         complexAcc.client=acc.client
         return complexAcc
 
+
 #configure the SOAP API
 application =Application(
     [AccountService],
