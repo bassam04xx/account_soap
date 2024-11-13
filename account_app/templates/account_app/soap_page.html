@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank SOAP API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        h2 {
+            color: #555;
+        }
+        .form-container {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .form-container input, .form-container select {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .form-container button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .form-container button:hover {
+            background-color: #0056b3;
+        }
+        #response-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .account-details, .all-accounts {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bank SOAP API</h1>
+    
+    <!-- Add Account Form -->
+    <div class="form-container">
+        <h2>Add Account</h2>
+        <form id="add-account-form">
+            <label for="rib">RIB:</label>
+            <input type="text" id="rib" name="rib" required><br>
+            
+            <label for="cin">Client CIN:</label>
+            <input type="text" id="cin" name="cin" required><br>
+            
+            <label for="name">Client Name:</label>
+            <input type="text" id="name" name="name" required><br>
+            
+            <label for="familyName">Client Family Name:</label>
+            <input type="text" id="familyName" name="familyName" required><br>
+            
+            <label for="email">Client Email:</label>
+            <input type="email" id="email" name="email" required><br>
+            
+            <label for="balance">Balance:</label>
+            <input type="number" id="balance" name="balance" required><br>
+            
+            <label for="accountType">Account Type:</label>
+            <select id="accountType" name="accountType" required>
+                <option value="credit">Credit</option>
+                <option value="debit">Debit</option>
+            </select><br>
+            
+            <button type="submit">Add Account</button>
+        </form>
+    </div>
+
+    <!-- Get Account Details Form -->
+    <div class="form-container">
+        <h2>Get Account Details</h2>
+        <form id="get-account-form">
+            <label for="accountEmail">Client Email:</label>
+            <input type="email" id="accountEmail" name="email" required><br>
+            
+            <button type="submit">Get Account</button>
+        </form>
+    </div>
+
+    <!-- Get All Accounts Form -->
+    <div class="form-container">
+        <h2>Get All Accounts</h2>
+        <form id="get-all-accounts-form">
+            <button type="submit">Get All Accounts</button>
+        </form>
+    </div>
+
+    <!-- Response Message Section -->
+    <div id="response-message"></div>
+
+    <!-- Account Details Display -->
+    <div id="account-details" class="account-details"></div>
+
+    <!-- All Accounts Display -->
+    <div id="all-accounts" class="all-accounts"></div>
+
+    <script>
+        // Add Account form submission handler
+        document.getElementById('add-account-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+        
+            const rib = document.getElementById('rib').value;
+            const cin = document.getElementById('cin').value;
+            const name = document.getElementById('name').value;
+            const familyName = document.getElementById('familyName').value;
+            const email = document.getElementById('email').value;
+            const balance = document.getElementById('balance').value;
+            const accountType = document.getElementById('accountType').value;
+            const creationDate = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
+
+            // Basic Validation
+            if (!rib || !cin || !name || !familyName || !email || !balance || !accountType) {
+                displayMessage("Please fill all the fields.", "error");
+                return;
+            }
+
+            const soapMessage = `
+                <x:Envelope xmlns:x="http://schemas.xmlsoap.org/soap/envelope/"
+                            xmlns:ban="bank.isg.tn"
+                            xmlns:acc="account_app.complexTypes">
+                    <x:Header/>
+                    <x:Body>
+                        <ban:add_account>
+                            <ban:account>
+                                <acc:rib>${rib}</acc:rib>
+                                <acc:client>
+                                    <acc:cin>${cin}</acc:cin>
+                                    <acc:name>${name}</acc:name>
+                                    <acc:familyName>${familyName}</acc:familyName>
+                                    <acc:email>${email}</acc:email>
+                                </acc:client>
+                                <acc:balance>${balance}</acc:balance>
+                                <acc:AccountType>${accountType}</acc:AccountType>
+                                <acc:creationDate>${creationDate}</acc:creationDate>
+                            </ban:account>
+                        </ban:add_account>
+                    </x:Body>
+                </x:Envelope>
+            `;
+        
+            fetch('/account/soap/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/xml',
+                },
+                body: soapMessage,
+            })
+            .then(response => response.text())
+            .then(data => {
+                displayMessage('Account added successfully!', 'success');
+                console.log(data);
+            })
+            .catch(error => {
+                displayMessage('Error adding account', 'error');
+                console.error(error);
+            });
+        });
+
+        // Get Account Details form submission handler
+        document.getElementById('get-account-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+        
+            const email = document.getElementById('accountEmail').value;
+
+            if (!email) {
+                displayMessage("Please provide the email to retrieve account details.", "error");
+                return;
+            }
+
+            const soapMessage = `
+                <x:Envelope xmlns:x="http://schemas.xmlsoap.org/soap/envelope/"
+                            xmlns:ban="bank.isg.tn">
+                    <x:Header/>
+                    <x:Body>
+                        <ban:get_account_details>
+                            <ban:email>${email}</ban:email>
+                        </ban:get_account_details>
+                    </x:Body>
+                </x:Envelope>
+            `;
+        
+            fetch('/account/soap/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/xml; charset=utf-8',
+                },
+                body: soapMessage,
+            })
+            .then(response => response.text())
+            .then(data => {
+                displayMessage('Account details retrieved successfully!', 'success');
+                displayAccountDetails(data);
+            })
+            .catch(error => {
+                displayMessage('Error retrieving account details', 'error');
+                console.error(error);
+            });
+        });
+
+        // Get All Accounts form submission handler
+        document.getElementById('get-all-accounts-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const soapMessage = `
+                <x:Envelope xmlns:x="http://schemas.xmlsoap.org/soap/envelope/"
+                            xmlns:ban="bank.isg.tn">
+                    <x:Header/>
+                    <x:Body>
+                        <ban:get_all_accounts></ban:get_all_accounts>
+                    </x:Body>
+                </x:Envelope>
+            `;
+        
+            fetch('/account/soap/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/xml',
+                },
+                body: soapMessage,
+            })
+            .then(response => response.text())
+            .then(data => {
+                displayMessage('All accounts retrieved successfully!', 'success');
+                displayAllAccounts(data);
+            })
+            .catch(error => {
+                displayMessage('Error retrieving all accounts', 'error');
+                console.error(error);
+            });
+        });
+
+        // Display a response message
+        function displayMessage(message, type) {
+            const messageDiv = document.getElementById('response-message');
+            messageDiv.textContent = message;
+            messageDiv.className = type;
+        }
+
+        // Parse and display account details
+        function displayAccountDetails(responseText) {
+    // Parse the SOAP response and display the account details
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(responseText, "text/xml");
+
+    // Access the get_account_detailsResult element using the correct namespace
+    const result = xmlDoc.getElementsByTagNameNS("http://schemas.xmlsoap.org/soap/envelope/", "Body")[0]
+        .getElementsByTagNameNS("bank.isg.tn", "get_account_detailsResponse")[0]
+        .getElementsByTagNameNS("bank.isg.tn", "get_account_detailsResult")[0];
+
+    if (!result) {
+        console.error('Account details not found.');
+        return;
+    }
+
+    // Extract the account details with the appropriate namespaces
+    const rib = result.getElementsByTagNameNS("account_app.complexTypes", "rib")[0]?.textContent;
+    const email = result.getElementsByTagNameNS("account_app.complexTypes", "email")[0]?.textContent;
+    const name = result.getElementsByTagNameNS("account_app.complexTypes", "name")[0]?.textContent;
+    const familyName = result.getElementsByTagNameNS("account_app.complexTypes", "familyName")[0]?.textContent;
+    const balance = result.getElementsByTagNameNS("account_app.complexTypes", "balance")[0]?.textContent;
+    const creationDate = result.getElementsByTagNameNS("account_app.complexTypes", "creationDate")[0]?.textContent;
+
+    const accountDetailsDiv = document.getElementById('account-details');
+    accountDetailsDiv.innerHTML = `
+        <h3>Account Details</h3>
+        <p><strong>RIB:</strong> ${rib}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Name:</strong> ${name} ${familyName}</p>
+        <p><strong>Balance:</strong> ${balance}</p>
+        <p><strong>Creation Date:</strong> ${creationDate}</p>
+    `;
+}
+
+
+        // Parse and display all accounts
+     function displayAllAccounts(responseText) {
+    // Parse the SOAP response and display all account details in a table
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(responseText, "text/xml");
+
+    // Access the accounts using namespaces
+    const accounts = xmlDoc.getElementsByTagNameNS("account_app.complexTypes", "Account");
+
+    const allAccountsDiv = document.getElementById('all-accounts');
+    let tableHTML = `
+        <h3>All Accounts</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>RIB</th>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Balance</th>
+                    <th>Account Type</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    for (let i = 0; i < accounts.length; i++) {
+        // Use namespace for accessing the child elements
+        const rib = accounts[i].getElementsByTagNameNS("account_app.complexTypes", "rib")[0]?.textContent;
+        const email = accounts[i].getElementsByTagNameNS("account_app.complexTypes", "email")[0]?.textContent;
+        const name = accounts[i].getElementsByTagNameNS("account_app.complexTypes", "name")[0]?.textContent;
+        const balance = accounts[i].getElementsByTagNameNS("account_app.complexTypes", "balance")[0]?.textContent;
+        const accountType = accounts[i].getElementsByTagNameNS("account_app.complexTypes", "creationDate")[0]?.textContent; // You might need to adjust this based on actual account type in your XML.
+
+        tableHTML += `
+            <tr>
+                <td>${rib}</td>
+                <td>${email}</td>
+                <td>${name}</td>
+                <td>${balance}</td>
+                <td>${accountType}</td>
+            </tr>
+        `;
+    }
+
+    tableHTML += '</tbody></table>';
+    allAccountsDiv.innerHTML = tableHTML;
+}
+
+    </script>
+</body>
+</html>

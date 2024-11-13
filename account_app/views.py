@@ -1,3 +1,4 @@
+from django.shortcuts import render
 from spyne.service import ServiceBase
 from spyne.decorator import rpc
 from spyne.model.primitive import Unicode
@@ -9,6 +10,10 @@ from spyne.model.complex import Iterable
 from django.views.decorators.csrf import csrf_exempt
 from .complexTypes import Account as complexAccount
 from .models import Account as modelAccount, Client as modelClient
+
+def soap_page(request):
+    return render(request, 'account_app/soap_page.html')
+
 
 class AccountService(ServiceBase):
     @rpc(complexAccount, _returns=Unicode)
